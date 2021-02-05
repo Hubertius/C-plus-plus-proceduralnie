@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <string>
 #include <sstream>
-
+#include <ctime>
 void generate_random_numbers(std::vector<int> & numbers, int n);
 int save_numbers_to_file(std::vector<int> &numbers, std::string filename);
 int process1(int n);
@@ -30,7 +30,7 @@ bool process2(HANDLE file);
 void generate_random_numbers(std::vector<int> & numbers, int n) {
   const int min = 1;
   const int max = 100;
-
+  srand(time(NULL));
   for(auto i = 0; i < n; i++)
     numbers.push_back(((std::rand() % max) + min)); // generowanie randomowej liczby i pushowanie jej do zmiennej typu wektorowego "numbers"
 }
