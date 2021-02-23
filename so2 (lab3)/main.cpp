@@ -1,14 +1,14 @@
 /*
  * @file main.cpp
  * @author Hubert Kopeć
- * @date 29/01/2021
+ * @date 19/02/2021
  * @brief EX 2 - Systemy operacyjne II, Program po LAB3
  */
 
 #include <windows.h>
 #include <vector>
 #include <iostream>
-#include <cstdlib>
+#include <stdlib.h>
 #include <ctime>
 #include <algorithm>
 #include <string>
@@ -50,8 +50,9 @@ int save_numbers_to_file(std::vector<int> &numbers, std::string filename){
       std::cerr << "Error during creation file" <<std::endl; // cerr to strumień błędów
       return 1;
     }
-    else {
-      std::string textToSave("A "); // tworzenie stringa
+    else 
+    {
+    std::string textToSave; // tworzenie stringa
       std::for_each(numbers.begin(),
                     numbers.end(),
                     [&textToSave](const int &n) {              // [&testToSave] adres naszego string-a
@@ -98,126 +99,113 @@ int process2()
       std::cout << "Error!" << std::endl;
       return 1;
   }
-  char buffer[1000];
   DWORD size_of_file = GetFileSize(file, nullptr);
+  if( size_of_file == 0xFFFFFFFF )
+  {
+    std::cout << "Error of the size of file." << std::endl;
+    CloseHandle(file);
+    return 0;
+  }
+  auto data = (LPSTR) GlobalAlloc(GPTR, size_of_file + 1);
+  DWORD read;
   bool check_for_existence  = ReadFile(
     file,
-    buffer,
+    data,
     size_of_file,
-    nullptr,
+    &read,
     nullptr
   );
-  if( check_for_existence == false || *(buffer + 0) != 'A'  )
+  if( check_for_existence == false )
   {
-    std::cout << "Error! Plik nie istnieje (albo nie ma litery A na poczatku)!" << std::endl;
+    std::cout << "Error! Plik nie istnieje." << std::endl;
+    CloseHandle(file);
     return 1;
   }
   else
   {
-    int count_all_numbers = 0;
-    int add = 0;
-    std::stringstream  numbers(std::string(buffer + 1));
-    for(int i; numbers >> i;)
+    std::cout << "File accepted." << std::endl;
+    data[size_of_file] = 0;
+    double add = 0;
+    std::string toString(data);
+    std::stringstream  numbersFromFile(toString);
+
+    GlobalFree(data);
+    /*int i;
+    for(i; numbers >> i;)
     {
-      add += i;
-      count_all_numbers++;
-      if( numbers.peek() == ',' )
+        add += i;
+        count_all_numbers++;
+        if( numbers.peek() == ',' )
+        {
+          numbers.ignore();
+        }
+        std::cout << i << std::endl;
+    }*/
+    std::vector<int> vector_data;
+    for(int i; numbersFromFile >> i;)
+    {
+      vector_data.push_back(i);
+      if( numbersFromFile.peek() == ',' )
       {
-        numbers.ignore();
+          numbersFromFile.ignore();
       }
-      std::cout << i << std::endl;
     }
-    std::cout << "Srednia: " << add / count_all_numbers << std::endl;
+    int count = 0;
+    for(int i = 0; i < vector_data.size(); i++)
+    {
+      add += vector_data[i];
+      count++;
+    }
+    std::cout << "Srednia: " << add / count << std::endl;
+  
   }
   CloseHandle(file);
   return 0;
 }
 
-/* WERSJA OBYDWU PONIŻSZYCH FUNKCJI Z TREŚCI ZADANIA NA WIKAMPIE
 
-int process1(){
-    std::string file_name = "log.txt";
-    DWORD dwBytesWritten = 0;
-    HANDLE file =
-    CreateFile(file_name.c_str(),
-               GENERIC_READ | GENERIC_WRITE,
-               FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
-               0,
-               CREATE_ALWAYS,
-               FILE_ATTRIBUTE_NORMAL,
-               0);
-    if (file == INVALID_HANDLE_VALUE)
-    {
-        std::cout << "Error!" << std::endl;
-        return 1;
-    }
-    else
-    {
-      if( !process2(file) )
-      {
-        std::cout << "Something went wrong! Error!" << std::endl;
-        return 1;
-      }
-      std::string buffer;
-      std::cout << "Enter text: ";
-      getline(std::cin, buffer);
-      WriteFile(
-        file,
-        buffer.c_str(),
-        buffer.length(),
-        &dwBytesWritten,
-        NULL
-      );
-      process2(file);
-    }
-    CloseHandle(file);
-
-    return 0;
-}
-
-bool process2(HANDLE file){
-  char * buffer;
-  DWORD size_of_file = GetFileSize(file, nullptr);
-  bool check_for_existence  = ReadFile(
-    file,
-    buffer,
-    size_of_file,
-    nullptr,
-    nullptr
-  );
-  if( !check_for_existence )
-  {
-    std::cout << "Error! File doesn't exist!" << std::endl;
-    return check_for_existence;
-  }
-  std::cout << "Size of the file: " << size_of_file << std::endl;
-  return check_for_existence;
-}
-
-*/
-
-int main()
+int main(int argc, char **argv, char **envp)
 {
-
-  process1(100);
-  process2();
-
-
-  /* KOD ODNOSZĄCY SIĘ DO TREŚCI ZADANIA NA WIKAMP
-
-  std::vector<int> numbers;
-  generate_random_numbers(numbers, 100);
-  for(auto const& number: numbers) // number to zmienna iteracyjna, numbers zmienna typu wektorowego
+  if( argc < 2 )
   {
-    std::cout << ", " << number << std::endl;
+    process2();
   }
-  std::string fileName = "numbers.txt";
-  save_numbers_to_file(numbers, fileName);
-  if( process1() )
+  else
   {
-    std::cout << "Process 1 and 2 ended successfully." << std::endl;
-  }
+    int n;
+    try
+    {
+      n = std::stoi(argv[1]);
+    }
+    catch(const std::invalid_argument & error)
+    {
+      std::cout << "Error with the argument!" << std::endl;
+      return 1;
+    }
+        process1(n);
+        STARTUPINFO startupinfo;
+        PROCESS_INFORMATION process_information;
 
-  */
-  return 0;
+        ZeroMemory(&startupinfo, sizeof(startupinfo));
+        startupinfo.cb = sizeof(startupinfo);
+        ZeroMemory(&process_information, sizeof(process_information));
+
+        CreateProcess(
+                nullptr,
+                argv[0],
+                nullptr,
+                nullptr,
+                0,
+                NORMAL_PRIORITY_CLASS,
+                nullptr,
+                nullptr,
+                &startupinfo,
+                &process_information
+        );
+        WaitForSingleObject(process_information.hProcess, INFINITE);
+        CloseHandle(process_information.hProcess);
+        CloseHandle(process_information.hThread);
+    }
+    return 0;    
+
 }

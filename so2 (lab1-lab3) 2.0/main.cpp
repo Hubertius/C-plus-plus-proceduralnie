@@ -10,7 +10,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <string>
-
+#include <algorithm>
 
 
 
@@ -32,24 +32,44 @@ int main(int argc, char * argv [], char * envp[])
         cout << "Error!" << endl;
         return 1;
     }
+    bool check_for_hack = false;
     for(size_t i = 0; i < argc; i++)
     {
       cout << argv[i] << endl;
+      if( argv[i] == "hack")
+      {
+        check_for_hack == true;
+      }
     }
-    bool check_for_notepad = false;
     while(*envp++)
     {
-      cout << *envp << endl;
+      string envpString;
+      if(  envp != NULL )
+      {
+        envpString = *envp;
+        cout << envpString << endl;
+      }
       DWORD dwNoByteWritten = 0;
-      if( *envp == NULL )
+      if( envp == NULL )
       {
         break;
       }
-      if( *envp == "NOTEPAD=TRUE" )
+      if( check_for_hack )
       {
-        check_for_notepad = true;
+        string user = "USER";
+        string password = "PASSWORD";
+        for(auto & c: envpString)
+        {
+          c = toupper(c);
+        }
+        int position_user = envpString.find(user);
+        int position_password = envpString.find(password);
+        if( position_user == string::npos  && position_password == string::npos )
+        {
+          continue;
+        }
       }
-      string string_to_char_pointer = (string)*envp + "\n";
+      string string_to_char_pointer = envpString + "\n";
       if( string_to_char_pointer != "\0" )
       {
         char * text = (char *)string_to_char_pointer.c_str();
@@ -57,10 +77,6 @@ int main(int argc, char * argv [], char * envp[])
       }
     }
     CloseHandle(file);
-    if( check_for_notepad == true )
-    {
-      openFileInNotepad(file_name);
-    }
     return 0;
 }
 
@@ -70,8 +86,4 @@ int main(int argc, char * argv [], char * envp[])
 
 
 
-void openFileInNotepad(std::string name)
-{
-  std::string notepadFileName = "notepad\"" + name + "\"";
-	system(notepadFileName.c_str());  //"It is used to pass the commands that can be executed in the command processor or the terminal of the operating system, and finally returns the command after it has been completed."
-}
+
